@@ -1,0 +1,102 @@
+{
+  "version": "active_learning_v3",
+  "tile_size": 1024,
+  "class_names": ["Palm"],
+  "training_sources": [
+    {
+      "group": "quad1",
+      "image": "2025_321145J_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 128
+    },
+    {
+      "group": "quad3",
+      "image": "2025_321145G_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 124
+    },
+    {
+      "group": "quad3",
+      "image": "2025_321145K_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 128
+    },
+    {
+      "group": "corrected_B",
+      "image": "2025_321145B_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 133
+    },
+    {
+      "image": "2025_321145C_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 130,
+      "tiles": 25,
+      "positive_tiles": 17,
+      "clipped_instances": 145,
+      "group": "human_reviewed_active_learning"
+    },
+    {
+      "image": "2025_321145D_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 38,
+      "tiles": 25,
+      "positive_tiles": 6,
+      "clipped_instances": 46,
+      "group": "human_reviewed_active_learning"
+    },
+    {
+      "image": "2025_321145F_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 215,
+      "tiles": 25,
+      "positive_tiles": 25,
+      "clipped_instances": 235,
+      "group": "human_reviewed_active_learning"
+    },
+    {
+      "image": "2025_321145L_RGBN.jpg",
+      "split": "train",
+      "dimensions": [5000, 5000],
+      "source_palm_polygons": 45,
+      "tiles": 25,
+      "positive_tiles": 5,
+      "clipped_instances": 48,
+      "group": "human_reviewed_active_learning"
+    }
+  ],
+  "held_out_validation_source": {
+    "group": "quad2",
+    "image": "2025_321145H_RGBN.tif",
+    "split": "val",
+    "dimensions": [5000, 5000],
+    "source_palm_polygons": 152
+  },
+  "splits": {
+    "train": {
+      "tiles": 200,
+      "positive_tiles": 133,
+      "instances": 1037,
+      "independent_source_images": 8
+    },
+    "val": {
+      "tiles": 25,
+      "positive_tiles": 7,
+      "instances": 159,
+      "independent_source_images": 1
+    }
+  },
+  "notes": [
+    "B, C, D, F, and L contain user-reviewed active-learning polygons.",
+    "G, J, and K retain the previously trusted annotations.",
+    "H remains completely held out so V3 can be compared fairly with V2.",
+    "Clusters without separable individual crowns were intentionally left unlabeled."
+  ]
+}

@@ -1,0 +1,5 @@
+names:
+  0: Palm
+  1: Palm Cluster
+path: .
+train: train.txt

@@ -1,0 +1,5 @@
+data/images/train/2025_321145B_RGBN.jpg
+data/images/train/2025_321145C_RGBN.jpg
+data/images/train/2025_321145D_RGBN.jpg
+data/images/train/2025_321145F_RGBN.jpg
+data/images/train/2025_321145L_RGBN.jpg

@@ -1,0 +1,71 @@
+{
+  "held_out_image": "2025_321145H_RGBN",
+  "mask_precision": 0.5909151742153372,
+  "mask_recall": 0.6981132075471698,
+  "mask_mAP50": 0.6728882570591652,
+  "mask_mAP50_95": 0.3372317987069059,
+  "box_precision": 0.5939976377858145,
+  "box_recall": 0.7269270470056017,
+  "box_mAP50": 0.6774808178638867,
+  "box_mAP50_95": 0.38239900638619584,
+  "v2_mask_precision": 0.6253379217389575,
+  "v2_mask_recall": 0.6226415094339622,
+  "v2_mask_mAP50": 0.6580673259818862,
+  "v2_mask_mAP50_95": 0.34453575138281767,
+  "tile_prediction_counts": {
+    "2025_321145B_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 152,
+      "tiles_with_detections": 24,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145C_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 79,
+      "tiles_with_detections": 17,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145D_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 23,
+      "tiles_with_detections": 5,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145F_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 206,
+      "tiles_with_detections": 25,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145G_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 297,
+      "tiles_with_detections": 25,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145J_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 211,
+      "tiles_with_detections": 25,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145K_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 172,
+      "tiles_with_detections": 18,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145L_RGBN": {
+      "split": "train",
+      "tile_detections_conf_0_25": 41,
+      "tiles_with_detections": 3,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    },
+    "2025_321145H_RGBN": {
+      "split": "val",
+      "tile_detections_conf_0_25": 128,
+      "tiles_with_detections": 10,
+      "note": "Counts may include seam duplicates where one crown crosses two tiles."
+    }
+  }
+}
