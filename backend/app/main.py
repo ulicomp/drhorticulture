@@ -15,6 +15,13 @@ from PIL import Image, UnidentifiedImageError
 
 from .inference import CONFIDENCE, MODEL_PATH, segmenter
 
+from .ndvi import calculate_ndvi
+import os
+import tempfile
+import rasterio
+
+
+
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 ANALYSES_ROOT = BACKEND_ROOT / "data" / "analyses"
@@ -123,6 +130,53 @@ def with_saved_additions(payload: dict[str, Any], directory: Path) -> dict[str, 
         for index, item in enumerate(additions)
     )
     return merged_payload
+
+
+
+@app.post("/api/ndvi")
+async def analyze_ndvi(file: UploadFile = File(...)):
+    suffix = Path(file.filename or "").suffix.lower()
+
+    if suffix not in {".tif", ".tiff"}:
+        raise HTTPException(
+            status_code=415,
+            detail="NDVI requires a 4-band TIFF image."
+        )
+
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Image exceeds the 250 MB upload limit."
+        )
+
+    temporary_path = None
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=suffix, delete=False
+        ) as temporary_file:
+            temporary_file.write(content)
+            temporary_path = temporary_file.name
+
+        result = calculate_ndvi(temporary_path)
+
+        return {
+            "filename": file.filename,
+            "status": "complete",
+            **result
+        }
+
+    except (ValueError, rasterio.errors.RasterioError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        ) from exc
+
+    finally:
+        if temporary_path and os.path.exists(temporary_path):
+            os.remove(temporary_path)
 
 
 @app.get("/api/health")

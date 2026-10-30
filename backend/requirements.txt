@@ -7,3 +7,4 @@ torch==2.6.0
 torchvision==0.21.0
 ultralytics==8.3.156
 uvicorn[standard]==0.34.2
+rasterio==1.5.2
