@@ -44,9 +44,13 @@ export async function analyzePalmImage(file: File, imageUrl: string): Promise<An
 
   const analysis = (await response.json()) as AnalysisResponse;
 
+  const isTiff = /\.tiff?$/i.test(file.name);
+
   return {
     ...analysis,
-    imageUrl,
+    imageUrl: isTiff
+    ? `${apiBaseUrl}/api/analyses/${analysis.id}/preview`
+    : imageUrl,
   };
 }
 
