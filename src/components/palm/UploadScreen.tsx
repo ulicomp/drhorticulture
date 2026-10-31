@@ -18,6 +18,11 @@ export function UploadScreen() {
   const photosRef = useRef<HTMLInputElement>(null);
   const filesRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+
+  const isTiff = selectedFile
+    ? /\.tiff?$/i.test(selectedFile.name)
+    : false;
+
   const onFile = (files: FileList | null) => {
     const file = files?.[0];
     if (file) chooseFile(file);
@@ -76,7 +81,7 @@ export function UploadScreen() {
               }}
               className="focus-ring glass mt-6 flex h-[clamp(240px,32dvh,300px)] w-full shrink-0 flex-col items-center justify-center overflow-hidden rounded-[30px] border-dashed p-6 text-center transition active:scale-[.995] lg:mt-0 lg:h-[390px] lg:bg-background/35 lg:hover:border-primary/45 lg:hover:bg-background/45"
             >
-              {selectedImageUrl ? (
+              {selectedImageUrl && !isTiff ? (
                 <img
                   src={selectedImageUrl}
                   alt="Selected aerial preview"

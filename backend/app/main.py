@@ -20,6 +20,10 @@ import os
 import tempfile
 import rasterio
 
+import numpy as np
+from fastapi import Response
+from rasterio.enums import Resampling
+
 
 
 
@@ -131,6 +135,59 @@ def with_saved_additions(payload: dict[str, Any], directory: Path) -> dict[str, 
     )
     return merged_payload
 
+
+
+@app.get("/api/analyses/{analysis_id}/preview")
+def get_image_preview(analysis_id: str):
+    directory = analysis_directory(analysis_id)
+
+    tiff_files = list(directory.glob("source.tif")) + list(
+        directory.glob("source.tiff")
+    )
+
+    if not tiff_files:
+        raise HTTPException(
+            status_code=404,
+            detail="TIFF source image not found."
+        )
+
+    try:
+        with rasterio.open(tiff_files[0]) as src:
+            if src.count < 3:
+                raise ValueError("Expected at least three RGB bands.")
+
+            scale = min(1.0, 2048 / max(src.width, src.height))
+            width = max(1, round(src.width * scale))
+            height = max(1, round(src.height * scale))
+
+            rgb = src.read(
+                [1, 2, 3],
+                out_shape=(3, height, width),
+                resampling=Resampling.bilinear,
+            ).astype(np.float32)
+
+            if rgb.min() < 0 or rgb.max() > 255:
+                for index in range(3):
+                    low, high = np.percentile(rgb[index], [2, 98])
+                    rgb[index] = (
+                        np.clip((rgb[index] - low) / (high - low + 1e-6), 0, 1)
+                        * 255
+                    )
+
+            rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+            rgb = np.moveaxis(rgb, 0, -1)
+
+            preview = Image.fromarray(rgb, "RGB")
+            output = io.BytesIO()
+            preview.save(output, format="JPEG", quality=85)
+
+            return Response(
+                content=output.getvalue(),
+                media_type="image/jpeg",
+            )
+
+    except (ValueError, rasterio.errors.RasterioError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/api/ndvi")
