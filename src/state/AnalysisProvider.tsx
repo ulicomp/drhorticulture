@@ -102,13 +102,43 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   }, [selectedFile, selectedImageUrl]);
 
   const resetAnalysis = useCallback(() => {
-    setScreen("upload");
-    setAnalysis(null);
-    setSelectedPalmId(null);
-    setProcessingError(null);
-    setIsDrawing(false);
-    setDraftPolygon([]);
-    setAnnotationMessage(null);
+  // Return to the upload screen
+  setScreen("upload");
+
+  // Clear the previous image
+  setSelectedFile(null);
+  setSelectedImageUrl((previous) => {
+    if (previous?.startsWith("blob:")) {
+      URL.revokeObjectURL(previous);
+    }
+    return null;
+  });
+
+  // Clear analysis results
+  setAnalysis(null);
+  setSelectedPalmId(null);
+  setProcessingError(null);
+
+  // Reset search and filters
+  setSearchQuery("");
+  setFilter("all");
+
+  // Reset interface state
+  setSheetState("medium");
+  setActiveTab("overview");
+
+  // Reset image layers
+  setLayers({
+    original: true,
+    outlines: true,
+    ids: false,
+    confidence: false,
+  });
+
+  // Reset drawing state
+  setIsDrawing(false);
+  setDraftPolygon([]);
+  setAnnotationMessage(null);
   }, []);
 
   const startDrawing = useCallback(() => {
