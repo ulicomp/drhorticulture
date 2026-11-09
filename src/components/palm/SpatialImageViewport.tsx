@@ -17,6 +17,7 @@ interface Props {
   onSelect: (id: string) => void;
   onOpen?: (id: string) => void;
   recenterSignal: number;
+  zoomSignal?: { factor: number; count: number };
   drawingMode?: boolean;
   draftPolygon?: Point[];
   onAddDraftPoint?: (point: Point) => void;
@@ -31,6 +32,7 @@ export function SpatialImageViewport({
   onSelect,
   onOpen,
   recenterSignal,
+  zoomSignal,
   drawingMode = false,
   draftPolygon = [],
   onAddDraftPoint,
@@ -39,6 +41,7 @@ export function SpatialImageViewport({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragOrigin = useRef<{ x: number; y: number; transform: ViewportTransform } | null>(null);
   const suppressSelectionUntil = useRef(0);
+  const lastZoomCount = useRef(0);
   const pinchOrigin = useRef<{
     distance: number;
     transform: ViewportTransform;
@@ -153,6 +156,24 @@ export function SpatialImageViewport({
     const timeout = window.setTimeout(() => setAnimated(false), 500);
     return () => window.clearTimeout(timeout);
   }, [recenterSignal, size, analysis.imageHeight, analysis.imageWidth, apply]);
+
+  useEffect(() => {
+    if (!zoomSignal || zoomSignal.count === lastZoomCount.current) return;
+    lastZoomCount.current = zoomSignal.count;
+    // Zoom toward the middle of the area not covered by the sheet
+    const desktop = size.width >= 768;
+    const visibleWidth = desktop ? size.width - Math.min(455, size.width * 0.38) : size.width;
+    const visibleHeight = desktop
+      ? size.height
+      : size.height - Math.min(sheetHeight, size.height - 240);
+    setAnimated(true);
+    zoomAt(zoomSignal.factor, visibleWidth / 2, visibleHeight / 2);
+    const timeout = window.setTimeout(() => setAnimated(false), 500);
+    return () => {
+      window.clearTimeout(timeout);
+      setAnimated(false);
+    };
+  }, [zoomSignal, size, sheetHeight, zoomAt]);
 
   const selectPalm = useCallback(
     (id: string) => {

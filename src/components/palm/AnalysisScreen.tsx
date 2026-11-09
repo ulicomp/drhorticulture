@@ -6,6 +6,7 @@ import { AnalysisBottomSheet } from "./AnalysisBottomSheet";
 import { AppButton } from "./AppButton";
 import { LayersPanel } from "./LayersPanel";
 import { SpatialImageViewport } from "./SpatialImageViewport";
+import { ZoomControls } from "./ZoomControls";
 
 const filters: { value: PalmFilter; label: string }[] = [
   { value: "all", label: "All palms" },
@@ -42,6 +43,8 @@ export function AnalysisScreen() {
     finishDrawing,
   } = useAnalysis();
 
+  const [zoomSignal, setZoomSignal] = useState({ factor: 1, count: 0 });
+
   const [layersOpen, setLayersOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [recenterSignal, setRecenterSignal] = useState(0);
@@ -76,6 +79,7 @@ export function AnalysisScreen() {
           setSheetState("expanded");
         }}
         recenterSignal={recenterSignal}
+        zoomSignal={zoomSignal}
         drawingMode={isDrawing}
         draftPolygon={draftPolygon}
         onAddDraftPoint={addDraftPoint}
@@ -204,6 +208,11 @@ export function AnalysisScreen() {
           <span className="sr-only">3D view coming later</span>
         </AppButton>
       </div>
+
+      <ZoomControls
+        bottom={sheetPixels[sheetState]}
+        onZoom={(factor) => setZoomSignal(({ count }) => ({ factor, count: count + 1 }))}
+      />
 
       <AnalysisBottomSheet />
     </main>
