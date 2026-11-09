@@ -36,6 +36,21 @@ export function clampTransform(
   };
 }
 
+export function isPointInPolygon(point: Point, polygon: Point[]) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i];
+    const b = polygon[j];
+    if (!a || !b) continue;
+    if (
+      a.y > point.y !== b.y > point.y &&
+      point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x
+    )
+      inside = !inside;
+  }
+  return inside;
+}
+
 export function getPalmFocusTransform(
   viewport: { width: number; height: number },
   image: { width: number; height: number },

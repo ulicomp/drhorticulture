@@ -30,6 +30,7 @@ export function AnalysisScreen() {
     filter,
     setFilter,
     sheetState,
+    setSheetState,
     isDrawing,
     draftPolygon,
     annotationMessage,
@@ -70,6 +71,10 @@ export function AnalysisScreen() {
         layers={layers}
         sheetHeight={sheetPixels[sheetState]}
         onSelect={selectPalm}
+        onOpen={(id) => {
+          selectPalm(id);
+          setSheetState("expanded");
+        }}
         recenterSignal={recenterSignal}
         drawingMode={isDrawing}
         draftPolygon={draftPolygon}

@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Analysis, LayerState, PalmDetection, Point, ViewportTransform } from "@/domain/palm";
-import { clampTransform, getCoverScale, getPalmFocusTransform } from "@/lib/spatial-viewport";
+import {
+  clampTransform,
+  getCoverScale,
+  getPalmFocusTransform,
+  isPointInPolygon,
+} from "@/lib/spatial-viewport";
 import { PalmOverlayLayer } from "./PalmOverlayLayer";
 
 interface Props {
@@ -10,6 +15,7 @@ interface Props {
   layers: LayerState;
   sheetHeight: number;
   onSelect: (id: string) => void;
+  onOpen?: (id: string) => void;
   recenterSignal: number;
   drawingMode?: boolean;
   draftPolygon?: Point[];
@@ -23,6 +29,7 @@ export function SpatialImageViewport({
   layers,
   sheetHeight,
   onSelect,
+  onOpen,
   recenterSignal,
   drawingMode = false,
   draftPolygon = [],
@@ -177,7 +184,15 @@ export function SpatialImageViewport({
       onDoubleClick={(event) => {
         if (drawingMode) return;
         const rect = event.currentTarget.getBoundingClientRect();
-        zoomAt(1.6, event.clientX - rect.left, event.clientY - rect.top);
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        // Pointer capture retargets the event to this div, so hit-test palms here
+        const { scale, translateX, translateY } = transformRef.current;
+        const point = { x: (x - translateX) / scale, y: (y - translateY) / scale };
+        const palm =
+          onOpen && [...palms].reverse().find((item) => isPointInPolygon(point, item.polygon));
+        if (palm) onOpen(palm.id);
+        else zoomAt(1.6, x, y);
       }}
       onPointerDown={(event) => {
         if (drawingMode) return;
