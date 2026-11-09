@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Analysis, LayerState, PalmDetection, Point, ViewportTransform } from "@/domain/palm";
-import { clampTransform, getCoverScale, getPalmFocusTransform } from "@/lib/spatial-viewport";
+import {
+  clampTransform,
+  getCoverScale,
+  getPalmFocusTransform,
+  isPointInPolygon,
+} from "@/lib/spatial-viewport";
 import { PalmOverlayLayer } from "./PalmOverlayLayer";
 
 interface Props {
@@ -10,7 +15,9 @@ interface Props {
   layers: LayerState;
   sheetHeight: number;
   onSelect: (id: string) => void;
+  onOpen?: (id: string) => void;
   recenterSignal: number;
+  zoomSignal?: { factor: number; count: number };
   drawingMode?: boolean;
   draftPolygon?: Point[];
   onAddDraftPoint?: (point: Point) => void;
@@ -23,7 +30,9 @@ export function SpatialImageViewport({
   layers,
   sheetHeight,
   onSelect,
+  onOpen,
   recenterSignal,
+  zoomSignal,
   drawingMode = false,
   draftPolygon = [],
   onAddDraftPoint,
@@ -32,6 +41,7 @@ export function SpatialImageViewport({
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const dragOrigin = useRef<{ x: number; y: number; transform: ViewportTransform } | null>(null);
   const suppressSelectionUntil = useRef(0);
+  const lastZoomCount = useRef(0);
   const pinchOrigin = useRef<{
     distance: number;
     transform: ViewportTransform;
@@ -147,6 +157,24 @@ export function SpatialImageViewport({
     return () => window.clearTimeout(timeout);
   }, [recenterSignal, size, analysis.imageHeight, analysis.imageWidth, apply]);
 
+  useEffect(() => {
+    if (!zoomSignal || zoomSignal.count === lastZoomCount.current) return;
+    lastZoomCount.current = zoomSignal.count;
+    // Zoom toward the middle of the area not covered by the sheet
+    const desktop = size.width >= 768;
+    const visibleWidth = desktop ? size.width - Math.min(455, size.width * 0.38) : size.width;
+    const visibleHeight = desktop
+      ? size.height
+      : size.height - Math.min(sheetHeight, size.height - 240);
+    setAnimated(true);
+    zoomAt(zoomSignal.factor, visibleWidth / 2, visibleHeight / 2);
+    const timeout = window.setTimeout(() => setAnimated(false), 500);
+    return () => {
+      window.clearTimeout(timeout);
+      setAnimated(false);
+    };
+  }, [zoomSignal, size, sheetHeight, zoomAt]);
+
   const selectPalm = useCallback(
     (id: string) => {
       if (performance.now() >= suppressSelectionUntil.current) onSelect(id);
@@ -177,7 +205,15 @@ export function SpatialImageViewport({
       onDoubleClick={(event) => {
         if (drawingMode) return;
         const rect = event.currentTarget.getBoundingClientRect();
-        zoomAt(1.6, event.clientX - rect.left, event.clientY - rect.top);
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        // Pointer capture retargets the event to this div, so hit-test palms here
+        const { scale, translateX, translateY } = transformRef.current;
+        const point = { x: (x - translateX) / scale, y: (y - translateY) / scale };
+        const palm =
+          onOpen && [...palms].reverse().find((item) => isPointInPolygon(point, item.polygon));
+        if (palm) onOpen(palm.id);
+        else zoomAt(1.6, x, y);
       }}
       onPointerDown={(event) => {
         if (drawingMode) return;
