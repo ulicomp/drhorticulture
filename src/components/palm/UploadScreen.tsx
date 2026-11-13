@@ -64,8 +64,8 @@ export function UploadScreen() {
               <div>
                 <div className="font-semibold">For best results</div>
                 <p className="mt-1 text-[13px] leading-5 text-muted-foreground">
-                  Use high-resolution, top-down aerial imagery. The local V3 model supports JPG,
-                  PNG, TIFF, and GeoTIFF imagery.
+                  Use high-resolution, top-down aerial imagery. JPG, PNG, TIFF, 
+                  and GeoTIFF formats are supported. 
                 </p>
               </div>
             </div>
@@ -105,6 +105,27 @@ export function UploadScreen() {
                 Local test limit: 250 MB
               </span>
             </button>
+            
+            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <Info
+                size={19}
+                className="mt-0.5 shrink-0 text-primary"
+              />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Unlock detailed palm insights
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Upload a{" "}
+                  <span className="font-semibold text-foreground">
+                    TIFF (.tif or .tiff)
+                  </span>{" "}
+                  image to access complete palm information.
+                  Other supported formats offer a more limited analysis.
+                </p>
+              </div>
+            </div>
+
             <input
               ref={photosRef}
               className="hidden"
@@ -158,6 +179,7 @@ export function UploadScreen() {
                   Use high-resolution, top-down aerial imagery.
                   <br />
                   Supported formats: JPG, PNG, TIFF, GeoTIFF.
+                  <br />
                 </p>
               </div>
               <ChevronRight size={20} className="mt-3 text-muted-foreground" />
