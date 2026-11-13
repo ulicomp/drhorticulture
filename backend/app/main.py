@@ -136,6 +136,86 @@ def with_saved_additions(payload: dict[str, Any], directory: Path) -> dict[str, 
     return merged_payload
 
 
+def tiff_source(directory: Path) -> Path | None:
+    for name in ("source.tif", "source.tiff"):
+        path = directory / name
+        if path.is_file():
+            return path
+    return None
+
+
+def active_palms(payload: dict[str, Any], directory: Path) -> list[dict[str, Any]]:
+    annotations_path = directory / "reviewed_annotations.json"
+    rejected: set[str] = set()
+    if annotations_path.is_file():
+        annotations = json.loads(annotations_path.read_text(encoding="utf-8"))
+        rejected = {
+            item["id"]
+            for item in annotations.get("palms", [])
+            if item.get("reviewStatus") == "rejected"
+        }
+    return [palm for palm in payload.get("palms", []) if palm["id"] not in rejected]
+
+
+def compute_canopy_ndvi(directory: Path, palms: list[dict[str, Any]]) -> dict[str, Any]:
+    source = tiff_source(directory)
+    if source is None:
+        return {
+            "status": "unavailable",
+            "reason": "Canopy NDVI needs a 4-band RGBN TIFF image.",
+        }
+    try:
+        result = calculate_ndvi(source, palms=palms)
+    except (ValueError, rasterio.errors.RasterioError) as exc:
+        return {"status": "unavailable", "reason": str(exc)}
+    ndvi = {"status": "complete", "canopy": result["canopy"], "palms": result["palms"]}
+    (directory / "ndvi.json").write_text(json.dumps(ndvi, indent=2), encoding="utf-8")
+    return ndvi
+
+
+def attach_ndvi(payload: dict[str, Any], ndvi: dict[str, Any]) -> dict[str, Any]:
+    if ndvi.get("status") != "complete":
+        return {**payload, "ndvi": {"status": "unavailable", "reason": ndvi.get("reason")}}
+    palms = []
+    for palm in payload.get("palms", []):
+        stats = ndvi["palms"].get(palm["id"])
+        if stats and stats["average_ndvi"] is not None:
+            palm = {
+                **palm,
+                "health": {
+                    **palm.get("health", {}),
+                    "ndvi": stats["average_ndvi"],
+                    "ndviMin": stats["minimum_ndvi"],
+                    "ndviMax": stats["maximum_ndvi"],
+                    "ndviPixels": stats["pixel_count"],
+                },
+            }
+        palms.append(palm)
+    canopy = ndvi["canopy"]
+    return {
+        **payload,
+        "palms": palms,
+        "ndvi": {
+            "status": "complete",
+            "canopy": {
+                "averageNdvi": canopy["average_ndvi"],
+                "minimumNdvi": canopy["minimum_ndvi"],
+                "maximumNdvi": canopy["maximum_ndvi"],
+                "pixelCount": canopy["pixel_count"],
+                "coveragePercent": canopy["coverage_percent"],
+                "palmCount": canopy["palm_count"],
+                "palmsWithData": canopy["palms_with_data"],
+            },
+        },
+    }
+
+
+def with_saved_ndvi(payload: dict[str, Any], directory: Path) -> dict[str, Any]:
+    ndvi_path = directory / "ndvi.json"
+    if not ndvi_path.is_file():
+        return payload
+    return attach_ndvi(payload, json.loads(ndvi_path.read_text(encoding="utf-8")))
+
 
 @app.get("/api/analyses/{analysis_id}/preview")
 def get_image_preview(analysis_id: str):
@@ -285,6 +365,7 @@ async def analyze_image(file: UploadFile = File(...)) -> dict[str, Any]:
         "modelVersion": "palm-v3-yolo11n-seg",
         **result,
     }
+    payload = attach_ndvi(payload, compute_canopy_ndvi(directory, payload["palms"]))
     (directory / "prediction.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload
 
@@ -296,7 +377,25 @@ def get_analysis(analysis_id: str) -> dict[str, Any]:
     if not path.is_file():
         raise HTTPException(status_code=404, detail="Analysis not found")
     payload = json.loads(path.read_text(encoding="utf-8"))
-    return with_saved_additions(payload, directory)
+    return with_saved_ndvi(with_saved_additions(payload, directory), directory)
+
+
+@app.post("/api/analyses/{analysis_id}/ndvi")
+def recompute_canopy_ndvi(analysis_id: str) -> dict[str, Any]:
+    directory = analysis_directory(analysis_id)
+    path = directory / "prediction.json"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    if tiff_source(directory) is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Canopy NDVI needs a 4-band RGBN TIFF image.",
+        )
+    payload = with_saved_additions(json.loads(path.read_text(encoding="utf-8")), directory)
+    ndvi = compute_canopy_ndvi(directory, active_palms(payload, directory))
+    if ndvi["status"] != "complete":
+        raise HTTPException(status_code=400, detail=ndvi["reason"])
+    return attach_ndvi(payload, ndvi)
 
 
 @app.put("/api/analyses/{analysis_id}/annotations")
@@ -321,6 +420,10 @@ def save_reviewed_annotations(analysis_id: str, submission: AnnotationSubmission
     destination.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     prediction = json.loads((directory / "prediction.json").read_text(encoding="utf-8"))
     merged_analysis = with_saved_additions(prediction, directory)
+    merged_analysis = attach_ndvi(
+        merged_analysis,
+        compute_canopy_ndvi(directory, active_palms(merged_analysis, directory)),
+    )
     submitted_added_ids = {
         palm.id for palm in submission.palms if palm.reviewStatus == "added"
     }
@@ -335,4 +438,5 @@ def save_reviewed_annotations(analysis_id: str, submission: AnnotationSubmission
         "trainingStatus": "reviewed_not_trained",
         "message": "Annotations were saved locally for a future reviewed training batch.",
         "palms": saved_additions,
+        "ndvi": merged_analysis["ndvi"],
     }

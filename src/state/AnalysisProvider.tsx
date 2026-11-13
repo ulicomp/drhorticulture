@@ -184,11 +184,12 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setIsSavingAnnotation(true);
     setAnnotationMessage("Saving the new palm outline…");
     try {
-      const savedPalm = await saveAddedPalm(analysis.id, palm);
+      const { palm: savedPalm, ndvi } = await saveAddedPalm(analysis.id, palm);
       setAnalysis((current) =>
         current
           ? {
               ...current,
+              ...(ndvi ? { ndvi } : {}),
               palms: current.palms.some((item) => item.id === savedPalm.id)
                 ? current.palms.map((item) => (item.id === savedPalm.id ? savedPalm : item))
                 : [...current.palms, savedPalm],
