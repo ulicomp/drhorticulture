@@ -283,6 +283,10 @@ Saving annotations does **not** automatically retrain or replace the deployed mo
 | `POST` | `/api/analyze`                           | Upload and analyze an aerial image  |
 | `GET`  | `/api/analyses/{analysisId}`             | Retrieve a saved analysis           |
 | `PUT`  | `/api/analyses/{analysisId}/annotations` | Save reviewed annotations           |
+| `POST` | `/api/ndvi`                              | Whole-image NDVI for a 4-band TIFF  |
+| `POST` | `/api/analyses/{analysisId}/ndvi`        | Recompute canopy NDVI for an analysis |
+
+For a 4-band RGBN TIFF, `/api/analyze` also returns canopy NDVI: the NDVI measured only inside the detected palm outlines, per palm (`health.ndvi`) and overall (`ndvi.canopy`). Saving a human-added outline recomputes it, and `POST /api/analyses/{analysisId}/ndvi` forces a recompute. JPG and PNG uploads report NDVI as unavailable.
 
 Local application analyses are written under:
 

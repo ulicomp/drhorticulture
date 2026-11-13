@@ -1,4 +1,4 @@
-import type { Analysis, PalmDetection } from "@/domain/palm";
+import type { Analysis, AnalysisNdvi, PalmDetection } from "@/domain/palm";
 
 const apiBaseUrl = (import.meta.env["VITE_PALM_API_URL"] ?? "http://127.0.0.1:8011").replace(
   /\/$/,
@@ -57,7 +57,7 @@ export async function analyzePalmImage(file: File, imageUrl: string): Promise<An
 export async function saveAddedPalm(
   analysisId: string,
   palm: PalmDetection,
-): Promise<PalmDetection> {
+): Promise<{ palm: PalmDetection; ndvi?: AnalysisNdvi }> {
   let response: Response;
 
   try {
@@ -99,6 +99,7 @@ export async function saveAddedPalm(
 
   const payload = (await response.json()) as {
     palms?: PalmDetection[];
+    ndvi?: AnalysisNdvi;
   };
 
   const savedPalm = payload.palms?.find((item) => item.id === palm.id);
@@ -107,5 +108,5 @@ export async function saveAddedPalm(
     throw new PalmApiError("The server saved the annotation but did not return its outline.");
   }
 
-  return savedPalm;
+  return payload.ndvi ? { palm: savedPalm, ndvi: payload.ndvi } : { palm: savedPalm };
 }

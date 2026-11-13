@@ -83,6 +83,13 @@ export function AnalysisBottomSheet() {
                 <span className="text-[13px] text-muted-foreground">
                   Tap a palm to view details
                 </span>
+                {analysis?.ndvi?.status === "complete" &&
+                  analysis.ndvi.canopy.averageNdvi !== null && (
+                    <span className="block text-[13px] text-primary">
+                      Canopy NDVI {analysis.ndvi.canopy.averageNdvi.toFixed(3)} ·{" "}
+                      {analysis.ndvi.canopy.coveragePercent}% of image
+                    </span>
+                  )}
               </span>
               <ChevronRight size={23} className="text-muted-foreground" />
             </div>

@@ -8,8 +8,25 @@ export type PalmTab = "overview" | "health" | "imagery" | "timeline" | "insights
 
 export interface PalmHealth {
   ndvi?: number;
+  ndviMin?: number;
+  ndviMax?: number;
+  ndviPixels?: number;
   rgbEstimate?: number;
 }
+
+export interface CanopyNdvi {
+  averageNdvi: number | null;
+  minimumNdvi: number | null;
+  maximumNdvi: number | null;
+  pixelCount: number;
+  coveragePercent: number;
+  palmCount: number;
+  palmsWithData: number;
+}
+
+export type AnalysisNdvi =
+  | { status: "complete"; canopy: CanopyNdvi }
+  | { status: "unavailable"; reason?: string | null };
 
 export interface PalmDetection {
   id: string;
@@ -47,6 +64,7 @@ export interface Analysis {
   status: "processing" | "complete" | "failed";
   modelVersion?: string;
   processing?: AnalysisProcessing;
+  ndvi?: AnalysisNdvi;
   palms: PalmDetection[];
 }
 
