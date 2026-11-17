@@ -48,9 +48,7 @@ export async function analyzePalmImage(file: File, imageUrl: string): Promise<An
 
   return {
     ...analysis,
-    imageUrl: isTiff
-    ? `${apiBaseUrl}/api/analyses/${analysis.id}/preview`
-    : imageUrl,
+    imageUrl: isTiff ? `${apiBaseUrl}/api/analyses/${analysis.id}/preview` : imageUrl,
   };
 }
 

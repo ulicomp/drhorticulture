@@ -25,8 +25,7 @@ export interface CanopyNdvi {
 }
 
 export type AnalysisNdvi =
-  | { status: "complete"; canopy: CanopyNdvi }
-  | { status: "unavailable"; reason?: string | null };
+  { status: "complete"; canopy: CanopyNdvi } | { status: "unavailable"; reason?: string | null };
 
 export interface PalmDetection {
   id: string;
