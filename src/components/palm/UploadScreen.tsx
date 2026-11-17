@@ -783,16 +783,35 @@ export function UploadScreen() {
                     className="upload-mobile-primary focus-ring"
                     onClick={() => imageRef.current?.click()}
                   >
-                    Choose picture
+                    Choose image
                   </button>
                   <button
                     type="button"
                     className="upload-mobile-secondary focus-ring"
                     onClick={() => cameraRef.current?.click()}
+                    aria-label="Take photo"
+                    title="Take photo"
                   >
-                    Take photo
+                    <Camera size={20} aria-hidden="true" />
+                    <span>Take photo</span>
                   </button>
                 </div>
+                {selectedFile ? (
+                  <div className="upload-mobile-file">
+                    <div>
+                      <span>SELECTED IMAGE</span>
+                      <strong>{selectedFile.name}</strong>
+                      <small>{formatFileSize(selectedFile.size)}</small>
+                    </div>
+                    <button
+                      type="button"
+                      className="focus-ring"
+                      onClick={() => imageRef.current?.click()}
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   className="upload-analyze focus-ring"
