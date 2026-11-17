@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/assets/drhorticulture-logo.webp" alt="DrHorticulture" width="110">
+  <img src="src/assets/drhorticulture-logo.webp" alt="DrHorticulture" width="300">
 </p>
 
 # DrHorticulture
