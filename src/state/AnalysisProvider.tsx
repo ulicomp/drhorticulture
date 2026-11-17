@@ -17,6 +17,8 @@ interface AnalysisContextValue {
   selectedFile: File | null;
   selectedImageUrl: string | null;
   chooseFile: (file: File) => void;
+  beginWorkspaceUpload: () => void;
+  cancelWorkspaceUpload: () => void;
   startAnalysis: () => Promise<void>;
   retryAnalysis: () => Promise<void>;
   resetAnalysis: () => void;
@@ -73,17 +75,29 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
 
   const chooseFile = useCallback((file: File) => {
     setSelectedFile(file);
-    setAnalysis(null);
-    setSelectedPalmId(null);
     setProcessingError(null);
-    setIsDrawing(false);
-    setDraftPolygon([]);
-    setAnnotationMessage(null);
     setSelectedImageUrl((previous) => {
       if (previous?.startsWith("blob:")) URL.revokeObjectURL(previous);
       return URL.createObjectURL(file);
     });
   }, []);
+
+  const beginWorkspaceUpload = useCallback(() => {
+    setSelectedFile(null);
+    setProcessingError(null);
+    setSelectedImageUrl(null);
+  }, []);
+
+  const cancelWorkspaceUpload = useCallback(() => {
+    setScreen("analysis");
+    setSelectedFile(null);
+    setProcessingError(null);
+    setSelectedImageUrl((previous) => {
+      if (previous?.startsWith("blob:") && previous !== analysis?.imageUrl)
+        URL.revokeObjectURL(previous);
+      return null;
+    });
+  }, [analysis?.imageUrl]);
 
   const runAnalysis = useCallback(async () => {
     if (!selectedFile || !selectedImageUrl) return;
@@ -91,6 +105,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     setScreen("processing");
     try {
       const result = await analyzePalmImage(selectedFile, selectedImageUrl);
+      if (analysis?.imageUrl.startsWith("blob:") && analysis.imageUrl !== result.imageUrl)
+        URL.revokeObjectURL(analysis.imageUrl);
       setAnalysis(result);
       setSelectedPalmId(null);
       setSearchQuery("");
@@ -99,47 +115,50 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       setProcessingError(error instanceof Error ? error.message : "Palm analysis failed.");
     }
-  }, [selectedFile, selectedImageUrl]);
+  }, [analysis?.imageUrl, selectedFile, selectedImageUrl]);
 
   const resetAnalysis = useCallback(() => {
-  // Return to the upload screen
-  setScreen("upload");
+    // Return to the upload screen
+    setScreen("upload");
 
-  // Clear the previous image
-  setSelectedFile(null);
-  setSelectedImageUrl((previous) => {
-    if (previous?.startsWith("blob:")) {
-      URL.revokeObjectURL(previous);
-    }
-    return null;
-  });
+    // Clear the previous image
+    setSelectedFile(null);
+    setSelectedImageUrl((previous) => {
+      if (previous?.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+      if (analysis?.imageUrl.startsWith("blob:") && analysis.imageUrl !== previous) {
+        URL.revokeObjectURL(analysis.imageUrl);
+      }
+      return null;
+    });
 
-  // Clear analysis results
-  setAnalysis(null);
-  setSelectedPalmId(null);
-  setProcessingError(null);
+    // Clear analysis results
+    setAnalysis(null);
+    setSelectedPalmId(null);
+    setProcessingError(null);
 
-  // Reset search and filters
-  setSearchQuery("");
-  setFilter("all");
+    // Reset search and filters
+    setSearchQuery("");
+    setFilter("all");
 
-  // Reset interface state
-  setSheetState("medium");
-  setActiveTab("overview");
+    // Reset interface state
+    setSheetState("medium");
+    setActiveTab("overview");
 
-  // Reset image layers
-  setLayers({
-    original: true,
-    outlines: true,
-    ids: false,
-    confidence: false,
-  });
+    // Reset image layers
+    setLayers({
+      original: true,
+      outlines: true,
+      ids: false,
+      confidence: false,
+    });
 
-  // Reset drawing state
-  setIsDrawing(false);
-  setDraftPolygon([]);
-  setAnnotationMessage(null);
-  }, []);
+    // Reset drawing state
+    setIsDrawing(false);
+    setDraftPolygon([]);
+    setAnnotationMessage(null);
+  }, [analysis?.imageUrl]);
 
   const startDrawing = useCallback(() => {
     setDraftPolygon([]);
@@ -247,6 +266,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
         selectedFile,
         selectedImageUrl,
         chooseFile,
+        beginWorkspaceUpload,
+        cancelWorkspaceUpload,
         startAnalysis: runAnalysis,
         retryAnalysis: runAnalysis,
         resetAnalysis,

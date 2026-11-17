@@ -1,11 +1,26 @@
-import { Scan, Trees, ArrowLeft, Upload, Check, ChevronDown, Crosshair, Layers3, Menu, Move3d, Plus, Undo2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Scan,
+  ArrowLeft,
+  Upload,
+  Check,
+  ChevronDown,
+  Crosshair,
+  Layers3,
+  Menu,
+  Move3d,
+  Plus,
+  Undo2,
+  X,
+} from "lucide-react";
+import brandIcon from "@/assets/drhorticulture-icon.webp";
+import { useEffect, useRef, useState } from "react";
 import type { PalmFilter } from "@/domain/palm";
 import { useAnalysis } from "@/state/AnalysisProvider";
 import { AnalysisBottomSheet } from "./AnalysisBottomSheet";
 import { AppButton } from "./AppButton";
 import { LayersPanel } from "./LayersPanel";
 import { SpatialImageViewport } from "./SpatialImageViewport";
+import { WorkspaceUploadDialog } from "./WorkspaceUploadDialog";
 import { ZoomControls } from "./ZoomControls";
 
 const filters: { value: PalmFilter; label: string }[] = [
@@ -23,8 +38,11 @@ const sheetPixels = {
 
 export function AnalysisScreen() {
   const {
+    screen,
     analysis,
     resetAnalysis,
+    beginWorkspaceUpload,
+    cancelWorkspaceUpload,
     visiblePalms,
     selectedPalm,
     layers,
@@ -50,10 +68,25 @@ export function AnalysisScreen() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [recenterSignal, setRecenterSignal] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [workspaceUploadOpen, setWorkspaceUploadOpen] = useState(false);
+  const replacementStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (!workspaceUploadOpen) return;
+    if (screen === "processing") replacementStartedRef.current = true;
+    if (screen === "analysis" && replacementStartedRef.current) {
+      replacementStartedRef.current = false;
+      setWorkspaceUploadOpen(false);
+    }
+  }, [screen, workspaceUploadOpen]);
 
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (workspaceUploadOpen && screen !== "processing") {
+          cancelWorkspaceUpload();
+          setWorkspaceUploadOpen(false);
+        }
         setLayersOpen(false);
         setFilterOpen(false);
         setMenuOpen(false);
@@ -62,7 +95,7 @@ export function AnalysisScreen() {
 
     window.addEventListener("keydown", close);
     return () => window.removeEventListener("keydown", close);
-  }, []);
+  }, [cancelWorkspaceUpload, screen, workspaceUploadOpen]);
 
   if (!analysis) return null;
 
@@ -140,85 +173,87 @@ export function AnalysisScreen() {
         </div>
       </div>
 
-      
-{menuOpen && (
-  <>
-    {/* Dark overlay behind the sidebar */}
-    <button
-      type="button"
-      aria-label="Close menu"
-      className="absolute inset-0 z-30 bg-transparent"
-      onClick={() => setMenuOpen(false)}
-    />
+      {menuOpen && (
+        <>
+          {/* Dark overlay behind the sidebar */}
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="absolute inset-0 z-30 bg-transparent"
+            onClick={() => setMenuOpen(false)}
+          />
 
-    {/* Sidebar */}
-    <aside
-      aria-label="Main menu"
-      className="absolute inset-y-0 left-0 z-40 flex w-[min(320px,85vw)] flex-col border-r border-[#354631] bg-[#101b10] p-6 pt-8 text-[#dce8d5] shadow-2xl"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#30452c]">
-            <Trees size={24} className="text-[#a1e66f]" />
-          </div>
+          {/* Sidebar */}
+          <aside
+            aria-label="Main menu"
+            className="absolute inset-y-0 left-0 z-40 flex w-[min(320px,85vw)] flex-col border-r border-[#354631] bg-[#101b10] p-6 pt-8 text-[#dce8d5] shadow-2xl"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                className="focus-ring flex items-center gap-3 rounded-xl text-left"
+                onClick={() => {
+                  setMenuOpen(false);
+                  resetAnalysis();
+                }}
+                aria-label="Return to the upload dashboard"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#30452c]">
+                  <img src={brandIcon} alt="" className="h-6 w-6 object-contain" />
+                </div>
 
-          <h2 className="text-lg font-semibold">
-            DrHorticulture
-          </h2>
-        </div>
+                <h2 className="text-lg font-semibold">DrHorticulture</h2>
+              </button>
 
-        <button
-          type="button"
-          aria-label="Close menu"
-          className="focus-ring rounded-full p-2 hover:bg-[#30452c]"
-          onClick={() => setMenuOpen(false)}
-        >
-          <X size={22} />
-        </button>
-      </div>
+              <button
+                type="button"
+                aria-label="Close menu"
+                className="focus-ring rounded-full p-2 hover:bg-[#30452c]"
+                onClick={() => setMenuOpen(false)}
+              >
+                <X size={22} />
+              </button>
+            </div>
 
-      {/* Navigation */}
-      <nav aria-label="Workspace navigation" className="mt-10 space-y-2">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-[#91a18b]">
-          Workspace
-        </p>
+            {/* Navigation */}
+            <nav aria-label="Workspace navigation" className="mt-10 space-y-2">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-[#91a18b]">
+                Workspace
+              </p>
 
-        <button
-          type="button"
-          onClick={() => setMenuOpen(false)}
-          className="focus-ring flex min-h-12 w-full items-center gap-3 rounded-xl bg-[#30452c] px-4 text-left font-medium"
-        >
-          <Scan size={20} className="text-[#a1e66f]" />
-          Current analysis
-        </button>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                className="focus-ring flex min-h-12 w-full items-center gap-3 rounded-xl bg-[#30452c] px-4 text-left font-medium"
+              >
+                <Scan size={20} className="text-[#a1e66f]" />
+                Current analysis
+              </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setMenuOpen(false);
-            resetAnalysis();
-          }}
-          className="focus-ring flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium text-[#dce8d5] transition-colors hover:bg-[#30452c]"
-        >
-          <Upload size={20} className="text-[#a1e66f]" />
-          Upload new image
-        </button>
-      </nav>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  beginWorkspaceUpload();
+                  replacementStartedRef.current = false;
+                  setWorkspaceUploadOpen(true);
+                }}
+                className="focus-ring flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium text-[#dce8d5] transition-colors hover:bg-[#30452c]"
+              >
+                <Upload size={20} className="text-[#a1e66f]" />
+                Upload new image
+              </button>
+            </nav>
 
-      {/* Footer */}
-      <div className="mt-auto border-t border-[#354631] pt-5">
-        <p className="text-xs text-[#91a18b]">
-          DrHorticulture
-        </p>
-        <p className="mt-1 text-xs text-[#91a18b]">
-          Palm detection workspace
-        </p>
-      </div>
-    </aside>
-  </>
-)}
-
+            {/* Footer */}
+            <div className="mt-auto border-t border-[#354631] pt-5">
+              <p className="text-xs text-[#91a18b]">DrHorticulture</p>
+              <p className="mt-1 text-xs text-[#91a18b]">Palm detection workspace</p>
+            </div>
+          </aside>
+        </>
+      )}
 
       {layersOpen && <LayersPanel close={() => setLayersOpen(false)} />}
 
@@ -303,6 +338,16 @@ export function AnalysisScreen() {
       />
 
       <AnalysisBottomSheet />
+
+      {workspaceUploadOpen && (
+        <WorkspaceUploadDialog
+          close={() => {
+            replacementStartedRef.current = false;
+            cancelWorkspaceUpload();
+            setWorkspaceUploadOpen(false);
+          }}
+        />
+      )}
     </main>
   );
 }

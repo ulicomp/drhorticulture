@@ -16,6 +16,7 @@ export default tseslint.config(
       ".tanstack/**",
       ".nitro/**",
       ".ultralytics/**",
+      "artifacts/**",
       "backend/data/analyses/**",
     ],
   },
