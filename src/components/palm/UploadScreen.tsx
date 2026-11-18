@@ -125,7 +125,7 @@ export function UploadScreen() {
                 </p>
               </div>
             </div>
-
+k
             <input
               ref={photosRef}
               className="hidden"
