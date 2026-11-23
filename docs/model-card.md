@@ -6,10 +6,10 @@
 | --------------------- | ------------------------------------------------------------------------------ |
 | Model name            | Palm V3                                                                        |
 | Model family          | Ultralytics YOLO11 segmentation                                                |
-| Task                  | Palm-crown instance segmentation in aerial RGB imagery                         |
+| Task                  | Palm-crown instance segmentation in aerial RGB imagery (JPG, PNG, or 4-band RGBN TIFF) |
 | Output                | Polygon mask, bounding box, confidence score, and class for each detected palm |
 | Deployed classes      | `Palm`                                                                         |
-| Input                 | High-resolution aerial RGB image                                               |
+| Input                 | High-resolution aerial RGB image (JPG, PNG, or 4-band RGBN TIFF)              |
 | Canonical weights     | `backend/models/palm_v3_best.pt`                                               |
 | Training environment  | Google Colab                                                                   |
 | Annotation platform   | CVAT                                                                           |

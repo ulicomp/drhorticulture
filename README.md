@@ -439,6 +439,17 @@ See [docs/known-limitations.md](docs/known-limitations.md) for additional detail
 
 DrHorticulture is being developed as a Capstone 2 project. The included code, model, dataset, and documentation allow authorized team members to reproduce the current prototype and continue its development.
 
+## AI Use Disclosure
+
+**AI inside the product.** DrHorticulture uses a custom-trained YOLO11 segmentation model (Palm V3) to propose palm-crown outlines. Its output is a proposal for human review, not a final result. See [docs/model-card.md](docs/model-card.md).
+
+**AI-assisted development.** Anthropic's Claude Code (Claude Sonnet 5.5) assisted with part of the codebase:
+
+- The canopy NDVI feature: restricting NDVI to the palm-crown polygons in `backend/app/ndvi.py`, the related API changes in `backend/app/main.py`, the frontend display of the results, and the tests in `backend/test_ndvi.py`.
+- The README paragraph describing canopy NDVI.
+
+AI-assisted commits carry a `Co-Authored-By: Claude` trailer in the git history. The feature was run and checked against the project's TIFF imagery before submission.
+
 ## Repository use and licensing status
 
 No public open-source license has been selected for this repository. The repository, included imagery, annotations, and model artifacts are currently intended for the authorized DrHorticulture Capstone team. The product owner supplied and approved the imagery for the team's project work.
